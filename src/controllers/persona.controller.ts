@@ -4,27 +4,53 @@ import {
   Filter,
   FilterExcludingWhere,
   repository,
-  Where,
+  Where
 } from '@loopback/repository';
 import {
-  post,
-  param,
-  get,
-  getModelSchemaRef,
-  patch,
-  put,
-  del,
-  requestBody,
-  response,
+  del, get,
+  getModelSchemaRef, param, patch, post, put, requestBody,
+  response
 } from '@loopback/rest';
 import {Persona} from '../models';
+import {Credenciales} from '../models/credenciales.model';
 import {PersonaRepository} from '../repositories';
+import {AutenticacionService} from '../services/autenticacion.service';
 
 export class PersonaController {
   constructor(
     @repository(PersonaRepository)
-    public personaRepository : PersonaRepository,
-  ) {}
+    public personaRepository: PersonaRepository,
+    @service(AutenticacionService)
+    public servicioAutenticacion: AutenticacionService,
+  ) { }
+
+  @post('/identificarPersona', {
+    responses: {
+      '200': {
+        descripcion: 'Identificación de usuarios'
+      }
+    }
+  })
+  async identificarPersona(
+    @requestBody() credenciales: Credenciales
+  ) {
+    let p = await this.servicioAutenticacion.identificarPersona(credenciales.usuario, credenciales.clave);
+    if (p) {
+      let token = this.servicioAutenticacion.GenerarTokenJWT(p);
+      return {
+        datos: {
+          nombre = p.nombres,
+          correo = p.correo,
+          id = p.id,
+        },
+        tk: token
+      }
+    } else {
+      throw new HttpErrors[401]('Datos inválidos');
+    }
+  }
+
+
 
   @post('/personas')
   @response(200, {
