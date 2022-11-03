@@ -1,8 +1,11 @@
 import { /* inject, */ BindingScope, injectable} from '@loopback/core';
+import {repository} from '@loopback/repository';
 import {Llaves} from '../config/llaves';
 import {Persona} from '../models/persona.model';
 import {PersonaRepository} from '../repositories';
 
+const generador = require('password-generator');
+const cryptoJS = require('crypto-js');
 const jwt = require('jsonwebtoken');
 
 @injectable({scope: BindingScope.TRANSIENT})
@@ -19,7 +22,7 @@ export class AutenticacionService {
     return clave;
   }
 
-  CifrarContrasena(clave: string) {
+  CifrarClave(clave: string) {
     let claveCifrada = cryptoJS.MD5(clave).toString();
     return claveCifrada;
   }
@@ -38,11 +41,12 @@ export class AutenticacionService {
   }
 
   GenerarTokenJWT(persona: Persona) {
-    let token = jwt.sign(
+    let token = jwt.sign({
       data: {
-      id: persona.id,
-      correo: persona.correo,
-      nombre: persona.nombres
+        id: persona.id,
+        correo: persona.correo,
+        nombre: persona.nombres
+      }
     },
       Llaves.claveJWT);
     return token;
